@@ -1,0 +1,799 @@
+:root {
+  /* Light Mode - School Notebook */
+  --paper-bg: #fdfdfd;
+  --line-color: #e0e0e0;
+  --margin-color: #ffcccc;
+  --text-unwritten: #b0b0b0;
+  --text-written: #004aad;
+  /* Ballpoint pen blue */
+  --header-bg: #ffffff;
+  --header-text: #333333;
+  --accent: #004aad;
+  --transition: 0.6s cubic-bezier(0.645, 0.045, 0.355, 1);
+  --mantra-size: 1.15rem;
+  /* Default size */
+}
+
+[data-theme='dark'] {
+  /* Dark Mode Notebook */
+  --paper-bg: #1a1a1a;
+  --line-color: #333333;
+  --margin-color: #4d0000;
+  --text-unwritten: #444444;
+  --text-written: #4fa3ff;
+  --header-bg: #121212;
+  --header-text: #e0e0e0;
+  --accent: #4fa3ff;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--header-bg);
+  color: var(--header-text);
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header Styling */
+.header {
+  padding: 0.75rem 1rem;
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--line-color);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-line-1,
+.header-line-2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-line-1 {
+  margin-bottom: 0.5rem;
+}
+
+.header-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lang-select {
+  padding: 0.35rem 0.6rem;
+  padding-right: 2.2rem;
+  min-width: 140px;
+  border-radius: 8px;
+  border: 1px solid var(--line-color);
+  background: var(--header-bg);
+  color: var(--accent);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23004aad%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem top 50%;
+  background-size: 0.65rem auto;
+  padding-right: 1.8rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+}
+
+.lang-select:hover {
+  border-color: var(--accent);
+  background-color: var(--paper-bg);
+}
+
+.font-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-right: 0.5rem;
+}
+
+.font-btn {
+  background: var(--paper-bg);
+  border: 1px solid var(--line-color);
+  color: var(--header-text);
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+.font-btn:active {
+  transform: scale(0.9);
+  background: var(--line-color);
+}
+
+/* Header Alignment Refinement */
+.header-line-1 {
+  gap: 10px;
+}
+
+.header-line-2 {
+  font-size: 0.95rem;
+  color: var(--header-text);
+  opacity: 0.95;
+}
+
+.counters {
+  display: flex;
+  gap: 1.25rem;
+  font-size: 1.2rem;
+}
+
+.counters strong {
+  font-size: 1.4rem;
+}
+
+.theme-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--header-text);
+}
+
+/* Notebook Paper Styling */
+.notebook-container {
+  flex: 1;
+  background-color: var(--paper-bg);
+  position: relative;
+  overflow: hidden;
+  perspective: 2000px;
+}
+
+.paper {
+  min-height: calc(100vh - 80px);
+  background-color: var(--paper-bg);
+  background-image:
+    linear-gradient(var(--line-color) 1px, transparent 1px);
+  background-size: 100% 3.5rem;
+  padding: 0 1rem 0 4.5rem;
+  position: relative;
+  transition: transform var(--transition), opacity 0.4s ease-in-out;
+  transform-origin: left center;
+  z-index: 1;
+  /* Default layer */
+}
+
+/* Foreground page that flips away */
+.paper.foreground {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 2;
+  pointer-events: none;
+  /* Don't intercept clicks while flipping */
+}
+
+/* Background page that stays still */
+.paper.background {
+  z-index: 1;
+}
+
+/* Red line back to the left */
+.paper::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 3.5rem;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--margin-color);
+}
+
+.paper.flip {
+  transform: rotateY(-110deg);
+  /* Slightly more aggressive flip */
+  opacity: 0;
+}
+
+.line {
+  height: 3.5rem;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 0.75rem;
+  font-size: var(--mantra-size);
+  white-space: wrap;
+  gap: 0.4rem;
+  position: relative;
+}
+
+.margin-counter {
+  position: absolute;
+  left: -4rem;
+  /* Inside left margin (left of red line) */
+  width: 3rem;
+  text-align: center;
+  color: var(--margin-color);
+  font-weight: 700;
+  font-size: var(--mantra-size);
+  opacity: 0.8;
+  bottom: 0.75rem;
+  /* Matching mantra style */
+}
+
+.word {
+  cursor: pointer;
+  transition: color 0.3s ease, transform 0.1s ease;
+  user-select: none;
+  display: inline-block;
+}
+
+.word.unwritten {
+  color: var(--text-unwritten);
+}
+
+.word.written {
+  color: var(--text-written);
+  font-weight: 600;
+  transform: scale(1.05);
+}
+
+/* Modal Styling */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--paper-bg);
+  border: 1px solid var(--line-color);
+  padding: 2rem;
+  border-radius: 16px;
+  width: 85%;
+  max-width: 300px;
+  text-align: center;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+.modal h3 {
+  margin-bottom: 0.75rem;
+  color: var(--accent);
+}
+
+.modal p {
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.9;
+}
+
+.modal-btns {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.modal-btn {
+  padding: 0.7rem 1.4rem;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.modal-btn.confirm {
+  background: var(--accent);
+  color: white;
+}
+
+.modal-btn.cancel {
+  background: var(--line-color);
+  color: var(--header-text);
+}
+
+/* Back Button */
+.back-btn {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  /* Back to right side for one-handed use */
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+  z-index: 101;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.back-btn:active {
+  transform: scale(0.9);
+}
+
+/* Tour Trigger Icon */
+.tour-trigger {
+  position: fixed;
+  bottom: 5.5rem;
+  right: 1.5rem;
+  background: var(--paper-bg);
+  color: var(--accent);
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 101;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tour-trigger:active {
+  transform: scale(0.9);
+}
+
+/* Tour Overlay */
+/* Tour Overlay (Spotlight Version) */
+.tour-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  /* No background here, spotlight div handles it */
+  z-index: 2000;
+  pointer-events: none;
+  /* Allow clicks through to the app */
+  transition: all 0.3s ease;
+}
+
+.tour-spotlight {
+  position: absolute;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
+  /* This is the darkened area */
+  border-radius: 8px;
+  border: 2px solid white;
+  z-index: 2001;
+  pointer-events: none;
+  /* Let clicks pass through the "hole" */
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.tour-card {
+  position: absolute;
+  background: var(--paper-bg);
+  border-radius: 16px;
+  padding: 1.2rem;
+  width: 280px;
+  text-align: left;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 2002;
+  animation: tourFadeIn 0.3s ease-out;
+  pointer-events: auto;
+  /* Buttons inside the card must be clickable */
+}
+
+@keyframes tourFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tour-card h2 {
+  color: var(--accent);
+  font-size: 1.1rem;
+  margin-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tour-card p {
+  font-size: 0.95rem;
+  margin-bottom: 1.2rem;
+  line-height: 1.4;
+  color: var(--header-text);
+}
+
+.tour-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tour-dot-container {
+  display: flex;
+  gap: 5px;
+}
+
+.tour-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--line-color);
+}
+
+.tour-dot.active {
+  background: var(--accent);
+}
+
+.tour-btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.tour-btn:active {
+  transform: scale(0.95);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 480px) {
+  .header-title {
+    font-size: 1rem;
+  }
+
+  .font-btn {
+    padding: 0.45rem 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  .lang-select {
+    padding: 0.45rem 0.65rem;
+    font-size: 0.85rem;
+  }
+
+  .line {
+    font-size: var(--mantra-size);
+    /* Enable dynamic scaling */
+    height: 3.5rem;
+    padding-bottom: 0.6rem;
+  }
+
+  .paper {
+    background-size: 100% 3.5rem;
+    padding-left: 3.5rem;
+    /* Adjusted left margin */
+  }
+
+  .paper::after {
+    left: 2.8rem;
+  }
+
+  .margin-counter {
+    left: -2.7rem;
+    font-size: var(--mantra-size);
+    bottom: 0.6rem;
+  }
+}
+
+/* Counter Active State - Bold Blue after first word tap */
+.margin-counter.counter-active {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* Navigation Arrows */
+.nav-arrow {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 101;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-arrow:active {
+  transform: translateY(-50%) scale(0.9);
+}
+
+.nav-arrow-right {
+  right: 0.75rem;
+}
+
+.nav-arrow-left {
+  left: 0.75rem;
+}
+
+/* Bhagvan Page Header Line 3 */
+.header-line-3 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.6rem 0 0.3rem;
+  background: linear-gradient(135deg, rgba(0, 74, 173, 0.1), rgba(79, 163, 255, 0.1));
+  border-radius: 12px;
+  margin-top: 0.5rem;
+}
+
+[data-theme='dark'] .header-line-3 {
+  background: linear-gradient(135deg, rgba(79, 163, 255, 0.15), rgba(0, 74, 173, 0.15));
+}
+
+/* Bhagvan Dropdown - Premium Styling */
+.bhagvan-select {
+  padding: 0.5rem 2.5rem 0.5rem 1rem;
+  min-width: 220px;
+  border-radius: 12px;
+  border: 2px solid var(--accent);
+  background: var(--paper-bg);
+  color: var(--header-text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23004aad%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.8rem center;
+  background-size: 0.7rem auto;
+  box-shadow: 0 3px 8px rgba(0, 74, 173, 0.15);
+  transition: all 0.25s;
+}
+
+.bhagvan-select:hover,
+.bhagvan-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px rgba(0, 74, 173, 0.25);
+  outline: none;
+}
+
+[data-theme='dark'] .bhagvan-select {
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%234fa3ff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+}
+
+/* Bhagvan Page Title */
+.bhagvan-page-title {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+@media (max-width: 480px) {
+  .bhagvan-select {
+    min-width: 180px;
+    font-size: 0.85rem;
+    padding: 0.4rem 2.2rem 0.4rem 0.8rem;
+  }
+
+  .nav-arrow {
+    width: 38px;
+    height: 38px;
+    font-size: 1.1rem;
+  }
+}
+
+/* ========================================
+   BHAGVAN JAAP 108-LINE UI
+   ======================================== */
+
+.bhagvan-jaap-container {
+  background: var(--paper-bg);
+  min-height: calc(100vh - 140px);
+  padding: 0.5rem;
+  position: relative;
+}
+
+.bhagvan-lines-wrapper {
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  padding-bottom: 4rem;
+  scroll-behavior: smooth;
+}
+
+/* Individual mantra line */
+.bhagvan-line {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 0.5rem;
+  margin-bottom: 0.25rem;
+  border-radius: 8px;
+  background: var(--paper-bg);
+  border-left: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.bhagvan-line.active {
+  background: linear-gradient(90deg, rgba(0, 74, 173, 0.12), rgba(79, 163, 255, 0.08));
+  border-left-color: var(--accent);
+  box-shadow: 0 2px 8px rgba(0, 74, 173, 0.15);
+}
+
+[data-theme='dark'] .bhagvan-line.active {
+  background: linear-gradient(90deg, rgba(79, 163, 255, 0.15), rgba(0, 74, 173, 0.1));
+}
+
+.bhagvan-line.completed {
+  opacity: 0.5;
+}
+
+/* Line number */
+.bhagvan-line-number {
+  min-width: 2.5rem;
+  font-size: var(--mantra-size);
+  font-weight: 700;
+  color: var(--accent);
+  text-align: center;
+  margin-right: 0.75rem;
+}
+
+.bhagvan-line.completed .bhagvan-line-number {
+  color: var(--text-written);
+}
+
+/* Mantra row containing tap groups */
+.bhagvan-mantra-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  flex: 1;
+}
+
+/* Tap group styling */
+.bhagvan-tap-group {
+  font-size: var(--mantra-size);
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  cursor: default;
+  user-select: none;
+}
+
+.bhagvan-tap-group.unwritten {
+  color: var(--text-unwritten);
+}
+
+.bhagvan-tap-group.written {
+  color: var(--text-written);
+  font-weight: 600;
+}
+
+.bhagvan-tap-group.active-tap {
+  background: linear-gradient(135deg, var(--accent), #6bb3ff);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0, 74, 173, 0.3);
+  transform: scale(1.05);
+  animation: pulse-tap 1.5s infinite;
+}
+
+@keyframes pulse-tap {
+
+  0%,
+  100% {
+    box-shadow: 0 3px 10px rgba(0, 74, 173, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 3px 20px rgba(0, 74, 173, 0.5);
+  }
+}
+
+.bhagvan-tap-group.active-tap:active {
+  transform: scale(0.98);
+}
+
+/* Progress bar at bottom */
+.bhagvan-progress-bar {
+  position: fixed;
+  bottom: 70px;
+  left: 1rem;
+  right: 1rem;
+  height: 2rem;
+  background: var(--line-color);
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.bhagvan-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #6bb3ff);
+  border-radius: 1rem;
+  transition: width 0.3s ease;
+}
+
+.bhagvan-progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--header-text);
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+[data-theme='dark'] .bhagvan-progress-text {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Mobile adjustments for Bhagvan Jaap */
+@media (max-width: 480px) {
+  .bhagvan-line {
+    padding: 0.5rem 0.3rem;
+  }
+
+  .bhagvan-line-number {
+    min-width: 2rem;
+    font-size: calc(var(--mantra-size) * 0.9);
+    margin-right: 0.5rem;
+  }
+
+  .bhagvan-tap-group {
+    font-size: calc(var(--mantra-size) * 0.95);
+    padding: 0.25rem 0.4rem;
+  }
+
+  .bhagvan-progress-bar {
+    bottom: 65px;
+    height: 1.5rem;
+  }
+
+  .bhagvan-progress-text {
+    font-size: 0.75rem;
+  }
+}
