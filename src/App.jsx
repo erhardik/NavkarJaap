@@ -53,33 +53,86 @@ const MantraPage = ({ lang, progress, pageCount, isFlipping, className = "", onW
 };
 
 // Bhagvan Jaap 108-line Component
-const BhagvanJaapPage = ({ lang, selectedBhagvan, completedCount, currentTapIndex, onTapGroup, malaCount }) => {
+const BhagvanJaapPage = ({ lang, selectedBhagvan, selectedVariant, completedCount, currentTapIndex, onTapGroup, malaCount }) => {
   const bhagvan = CONFIG.bhagvanList.find(b => b.id === selectedBhagvan) || CONFIG.bhagvanList[0];
   const template = CONFIG.bhagvanMantraTemplate;
   const activeLineRef = useRef(null);
+  const wrapperRef = useRef(null);
 
-  // Build 4 tap groups for display
-  const tapGroups = [
-    template.prefix1[lang],
-    template.prefix2[lang],
-    bhagvan.mantraName[lang],
-    template.suffix[lang]
-  ];
+  // Check if this is 108 Parshwanath Jaap (different mantra per line)
+  const is108Parshwanath = bhagvan.is108Parshwanath;
+
+  // Check if this is Shankheshwar with variant selected
+  const hasParshwanathVariant = bhagvan.hasVariants && selectedVariant !== null;
+  const hasDevDeviVariant = bhagvan.hasDevDeviVariants && selectedVariant !== null;
+
+  // Get the mantra name for each line
+  const getMantraNameForLine = (lineIndex) => {
+    // Language-specific suffixes
+    const parshwanathSuffix = {
+      hindi: "पार्श्वनाथाय",
+      english: "Parshvanathay",
+      gujarati: "પાર્શ્વનાથાય"
+    };
+
+    if (is108Parshwanath) {
+      // For 108 Parshwanath Jaap, each line has different name
+      const name = CONFIG.parshwanath108Names[lineIndex];
+      return name ? `${name[lang]} ${parshwanathSuffix[lang]}` : bhagvan.mantraName[lang];
+    } else if (hasParshwanathVariant) {
+      // For Shankheshwar with variant, use selected variant name
+      const variantName = CONFIG.parshwanath108Names[selectedVariant];
+      return variantName ? `${variantName[lang]} ${parshwanathSuffix[lang]}` : bhagvan.mantraName[lang];
+    } else if (hasDevDeviVariant) {
+      // For Dev-Devi, use fullMantra if available, else selected name + Namah
+      const variantName = CONFIG.devDeviList[selectedVariant];
+      if (variantName && variantName.fullMantra) {
+        return variantName.fullMantra[lang];
+      }
+      return variantName ? `${variantName[lang]} ${bhagvan.mantraName[lang]}` : bhagvan.mantraName[lang];
+    }
+    return bhagvan.mantraName[lang];
+  };
 
   // Auto-scroll to keep active line in view
   useEffect(() => {
-    if (activeLineRef.current) {
-      activeLineRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (wrapperRef.current) {
+      if (completedCount > 0 && activeLineRef.current) {
+        // Calculate scroll position to show active line at top area
+        const wrapper = wrapperRef.current;
+        const activeLine = activeLineRef.current;
+        const lineTop = activeLine.offsetTop;
+        const scrollMargin = 10; // Small margin from top
+
+        wrapper.scrollTo({
+          top: lineTop - scrollMargin,
+          behavior: 'smooth'
+        });
+      } else if (completedCount === 0) {
+        // Reset to top if starting over or switching to fresh bhagvan
+        wrapperRef.current.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      }
     }
-  }, [completedCount]);
+  }, [completedCount, selectedBhagvan, selectedVariant]);
 
   return (
     <div className="bhagvan-jaap-container">
-      <div className="bhagvan-lines-wrapper">
+      <div className="bhagvan-lines-wrapper" ref={wrapperRef}>
         {[...Array(108)].map((_, lineIndex) => {
           const lineNumber = lineIndex + 1;
           const isCompleted = lineIndex < completedCount;
           const isActive = lineIndex === completedCount;
+
+          // Build 4 tap groups for this specific line
+          const tapGroups = [
+            template.prefix1[lang],
+            template.prefix2[lang],
+            getMantraNameForLine(lineIndex),
+            template.suffix[lang]
+          ];
 
           return (
             <div
@@ -138,18 +191,44 @@ const App = () => {
   });
 
   // Bhagvan Jaap specific state
-  const [bhagvanCounts, setBhagvanCounts] = useState(() => {
-    const saved = localStorage.getItem('bhagvan_counts_v1');
-    return saved ? JSON.parse(saved) : { lifetime: 0, mala: 0 };
+  // Per-Bhagvan State (counts + progress)
+  const [bhagvanStates, setBhagvanStates] = useState(() => {
+    const saved = localStorage.getItem('bhagvan_states_v2');
+    if (saved) return JSON.parse(saved);
+
+    // Migration from v1 if exists
+    const oldCounts = localStorage.getItem('bhagvan_counts_v1');
+    if (oldCounts) {
+      const parsed = JSON.parse(oldCounts);
+      // Assign old counts to default Bhagvan (id 1)
+      return {
+        1: {
+          lifetime: parsed.lifetime,
+          mala: parsed.mala,
+          completed: 0,
+          currentTap: 0
+        }
+      };
+    }
+    return {};
   });
+
   const [selectedBhagvan, setSelectedBhagvan] = useState(() => {
     const saved = localStorage.getItem('selectedBhagvan');
     return saved ? parseInt(saved, 10) : 1;
   });
 
-  // Bhagvan 108-line tracking
-  const [bhagvanCompletedCount, setBhagvanCompletedCount] = useState(0);
-  const [bhagvanCurrentTap, setBhagvanCurrentTap] = useState(0);
+  // Selected variant for Shankheshwar Parshwanath (index into parshwanath108Names)
+  const [selectedVariant, setSelectedVariant] = useState(() => {
+    const saved = localStorage.getItem('selectedVariant');
+    return saved ? parseInt(saved, 10) : 0;  // Default to first (Shankheshwar)
+  });
+
+  // Helpers to get current Bhagvan data
+  const currentBhagvanState = bhagvanStates[selectedBhagvan] || { lifetime: 0, mala: 0, completed: 0, currentTap: 0 };
+  const bhagvanCompletedCount = currentBhagvanState.completed;
+  const bhagvanCurrentTap = currentBhagvanState.currentTap;
+  const bhagvanCounts = { lifetime: currentBhagvanState.lifetime, mala: currentBhagvanState.mala };
 
   const [currentProgress, setCurrentProgress] = useState(0);
   const [isFlipping, setIsFlipping] = useState(false);
@@ -197,16 +276,25 @@ const App = () => {
   }, [counts, pageWritingCount]);
 
   useEffect(() => {
-    localStorage.setItem('bhagvan_counts_v1', JSON.stringify(bhagvanCounts));
-  }, [bhagvanCounts]);
+    localStorage.setItem('bhagvan_states_v2', JSON.stringify(bhagvanStates));
+  }, [bhagvanStates]);
 
   useEffect(() => {
     localStorage.setItem('selectedBhagvan', selectedBhagvan.toString());
   }, [selectedBhagvan]);
 
   useEffect(() => {
+    localStorage.setItem('selectedVariant', selectedVariant.toString());
+  }, [selectedVariant]);
+
+  useEffect(() => {
     localStorage.setItem('counterActivated', counterActivated.toString());
   }, [counterActivated]);
+
+  // Reset variant when Bhagvan changes to avoid invalid selections
+  useEffect(() => {
+    setSelectedVariant(0);
+  }, [selectedBhagvan]);
 
   useEffect(() => {
     const handlePopState = (e) => {
@@ -268,29 +356,36 @@ const App = () => {
   const handleBhagvanTap = useCallback((tapIndex) => {
     if (tapIndex !== bhagvanCurrentTap) return;
 
-    if (tapIndex === 3) {
-      // Last tap of this line - complete the line
-      setBhagvanCurrentTap(0);
+    setBhagvanStates(prevStates => {
+      // Get current state for this Bhagvan or default
+      const current = prevStates[selectedBhagvan] || { lifetime: 0, mala: 0, completed: 0, currentTap: 0 };
 
-      if (bhagvanCompletedCount === 107) {
-        // Completed 108 - increment mala and reset
-        setBhagvanCounts(prev => {
-          const newLifetime = prev.lifetime + 108;
-          const newMala = prev.mala + 1;
-          return { lifetime: newLifetime, mala: newMala };
-        });
-        setBhagvanCompletedCount(0);
+      let nextState = { ...current };
+
+      if (tapIndex === 3) {
+        // Last tap of this line - complete the line
+        nextState.currentTap = 0;
+
+        if (current.completed === 107) {
+          // Completed 108 - increment mala and reset progress
+          nextState.lifetime = current.lifetime + 1;
+          nextState.mala = current.mala + 1;
+          nextState.completed = 0; // Reset for next mala
+        } else {
+          nextState.lifetime = current.lifetime + 1;
+          nextState.completed = current.completed + 1;
+        }
       } else {
-        setBhagvanCounts(prev => ({
-          ...prev,
-          lifetime: prev.lifetime + 1
-        }));
-        setBhagvanCompletedCount(prev => prev + 1);
+        nextState.currentTap = current.currentTap + 1;
       }
-    } else {
-      setBhagvanCurrentTap(prev => prev + 1);
-    }
-  }, [bhagvanCurrentTap, bhagvanCompletedCount]);
+
+      return {
+        ...prevStates,
+        [selectedBhagvan]: nextState
+      };
+    });
+  }, [bhagvanCurrentTap, selectedBhagvan]); // Removed bhagvanCompletedCount as it is read from state update fn or derived
+
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
@@ -328,18 +423,11 @@ const App = () => {
     }
   };
 
-  // Reset Progress if language changes
+  // Reset Progress if language changes (Only for Navkar)
   useEffect(() => {
     setCurrentProgress(0);
-    setBhagvanCompletedCount(0);
-    setBhagvanCurrentTap(0);
+    // For Bhagvan Jaap, we preserve progress even if language changes
   }, [lang]);
-
-  // Reset Bhagvan progress when selected Bhagvan changes
-  useEffect(() => {
-    setBhagvanCompletedCount(0);
-    setBhagvanCurrentTap(0);
-  }, [selectedBhagvan]);
 
   // Update spotlight rect when tourStep changes
   useEffect(() => {
@@ -423,6 +511,36 @@ const App = () => {
                 </option>
               ))}
             </select>
+
+            {/* Secondary dropdown for Shankheshwar Parshwanath variants */}
+            {CONFIG.bhagvanList.find(b => b.id === selectedBhagvan)?.hasVariants && (
+              <select
+                className="bhagvan-variant-select"
+                value={selectedVariant}
+                onChange={(e) => setSelectedVariant(parseInt(e.target.value, 10))}
+              >
+                {CONFIG.parshwanath108Names.map((name, index) => (
+                  <option key={index} value={index}>
+                    {name[lang]}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {/* Dev-Devi Dropdown */}
+            {CONFIG.bhagvanList.find(b => b.id === selectedBhagvan)?.hasDevDeviVariants && (
+              <select
+                className="bhagvan-variant-select"
+                value={selectedVariant}
+                onChange={(e) => setSelectedVariant(parseInt(e.target.value, 10))}
+              >
+                {CONFIG.devDeviList.map((name, index) => (
+                  <option key={index} value={index}>
+                    {name[lang]}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         )}
       </header>
@@ -454,6 +572,7 @@ const App = () => {
           <BhagvanJaapPage
             lang={lang}
             selectedBhagvan={selectedBhagvan}
+            selectedVariant={selectedVariant}
             completedCount={bhagvanCompletedCount}
             currentTapIndex={bhagvanCurrentTap}
             onTapGroup={handleBhagvanTap}
